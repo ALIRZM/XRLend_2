@@ -17,6 +17,9 @@ const Headsets = () => {
   const [form, setForm] = useState({ model: '', assetTag: '' });
   const [error, setError] = useState('');
   const [notice, setNotice] = useState('');
+  
+  const [editingNotesId, setEditingNotesId] = useState(null);
+  const [editingNotesText, setEditingNotesText] = useState('');
 
   const load = () => axiosInstance.get('/api/headsets')
     .then(({ data }) => setHeadsets(data))
@@ -55,6 +58,23 @@ const Headsets = () => {
       load();
     } catch (err) {
       setError(err.response?.data?.message || 'Could not update status');
+    }
+  };
+
+  const handleEditNotes = (h) => {
+    setEditingNotesId(h._id);
+    setEditingNotesText(h.notes || '');
+  };
+
+  const saveNotes = async (id) => {
+    setError(''); setNotice('');
+    try {
+      await axiosInstance.put(`/api/headsets/${id}/notes`, { notes: editingNotesText });
+      setNotice('Repair notes updated.');
+      setEditingNotesId(null);
+      load();
+    } catch (err) {
+      setError(err.response?.data?.message || 'Could not update notes');
     }
   };
 
@@ -117,6 +137,35 @@ const Headsets = () => {
                 </select>
               </div>
             )}
+
+            {/* View/Edit Notes Section */}
+            <div className="pt-2 border-t border-gray-100 mt-1 flex flex-col gap-2">
+              <div className="flex justify-between items-center">
+                <span className="text-sm font-medium text-gray-500">Repair Notes:</span>
+                {user?.role === 'technician' && editingNotesId !== h._id && (
+                  <button onClick={() => handleEditNotes(h)} className="text-xs text-blue-600 font-semibold uppercase hover:underline">Edit Notes</button>
+                )}
+              </div>
+              
+              {editingNotesId === h._id ? (
+                <div className="flex flex-col gap-2">
+                  <textarea 
+                    className="w-full h-20 p-2 border border-gray-300 rounded-md text-sm outline-none focus:ring-1 focus:ring-blue-500"
+                    value={editingNotesText}
+                    onChange={(e) => setEditingNotesText(e.target.value)}
+                    placeholder="Enter maintenance or repair notes here..."
+                  />
+                  <div className="flex justify-end gap-2">
+                    <button onClick={() => setEditingNotesId(null)} className="px-3 py-1.5 text-sm font-medium border border-gray-300 rounded-md hover:bg-gray-50">Cancel</button>
+                    <button onClick={() => saveNotes(h._id)} className="px-3 py-1.5 text-sm font-medium bg-black text-white rounded-md hover:bg-gray-800">Save Notes</button>
+                  </div>
+                </div>
+              ) : (
+                <p className="text-sm text-gray-700 bg-gray-50 p-2.5 rounded-md italic border border-gray-100 min-h-[40px]">
+                  {h.notes || 'No repair notes provided.'}
+                </p>
+              )}
+            </div>
           </div>
         ))}
 

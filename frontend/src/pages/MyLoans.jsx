@@ -38,6 +38,11 @@ const MyLoans = () => {
                 <span className={MUTED}>
                   {l.headset?.assetTag}&nbsp;&nbsp;.&nbsp;&nbsp;{pretty(l.startDate)} - {pretty(l.endDate)}
                 </span>
+                {l.headset?.notes && (
+                  <p className="text-xs text-gray-700 bg-gray-50 p-2 rounded-md italic mt-1 border border-gray-100">
+                    {l.headset?.notes}
+                  </p>
+                )}
               </div>
               <StatusChip status={l.status} />
             </div>
