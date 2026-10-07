@@ -20,12 +20,14 @@ const Headsets = () => {
   
   const [editingNotesId, setEditingNotesId] = useState(null);
   const [editingNotesText, setEditingNotesText] = useState('');
+  
+  const [filterMaintenance, setFilterMaintenance] = useState(false);
 
-  const load = () => axiosInstance.get('/api/headsets')
+  const load = () => axiosInstance.get(`/api/headsets${filterMaintenance ? '?status=Maintenance' : ''}`)
     .then(({ data }) => setHeadsets(data))
     .catch((err) => setError(err.response?.data?.message || 'Could not load the inventory'));
 
-  useEffect(() => { load(); }, []);
+  useEffect(() => { load(); }, [filterMaintenance]);
 
   const filtered = useMemo(() => {
     const q = submitted.trim().toLowerCase();
@@ -89,7 +91,20 @@ const Headsets = () => {
           value={query} onChange={(e) => setQuery(e.target.value)} />
         <button type="button" onClick={() => setSubmitted(query)} className={BTN_ALT}>Search</button>
 
-        <p className={`${MUTED} self-start`}>Tap a headset to see its model, asset tag and status.</p>
+        <div className="flex justify-between items-center w-full mb-2 mt-2">
+          <p className={`${MUTED}`}>Tap a headset to see its model, asset tag and status.</p>
+          {user?.role === 'technician' && (
+            <label className="flex items-center gap-2 text-sm font-medium text-gray-700 cursor-pointer">
+              <input 
+                type="checkbox" 
+                checked={filterMaintenance} 
+                onChange={(e) => setFilterMaintenance(e.target.checked)}
+                className="rounded border-gray-300 text-blue-600 focus:ring-blue-500 w-4 h-4"
+              />
+              Needs Maintenance
+            </label>
+          )}
+        </div>
 
         {user?.role === 'technician' && (
           <button type="button" onClick={() => setAdding(!adding)} className={BTN}>Add a headset</button>
@@ -170,7 +185,9 @@ const Headsets = () => {
         ))}
 
         {filtered.length === 0 && !error && (
-          <p className={`${MUTED} w-full text-center py-4`}>No headsets found.</p>
+          <p className={`${MUTED} w-full text-center py-4`}>
+            {filterMaintenance ? "No devices currently need maintenance" : "No headsets found."}
+          </p>
         )}
       </div>
       <BottomNav />

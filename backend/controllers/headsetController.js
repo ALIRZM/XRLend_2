@@ -22,7 +22,12 @@ const addHeadset = async (req, res) => {
 // R10: anyone logged in can browse the list
 const getHeadsets = async (req, res) => {
     try {
-        const headsets = await Headset.find({ status: { $ne: 'Retired' } }).sort({ assetTag: 1 }).lean();
+        const query = { status: { $ne: 'Retired' } };
+        if (req.query.status) {
+            query.status = req.query.status;
+        }
+        
+        const headsets = await Headset.find(query).sort({ assetTag: 1 }).lean();
         
         // Find headsets that currently have an active loan
         const activeLoans = await Loan.find({ status: { $in: ['Pending', 'Approved', 'Collected'] } }).lean();
