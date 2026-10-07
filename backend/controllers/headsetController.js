@@ -56,4 +56,38 @@ const getAvailable = async (req, res) => {
     }
 };
 
-module.exports = { addHeadset, getHeadsets, getAvailable };
+const { HeadsetContext } = require('../utils/HeadsetState');
+const Loan = require('../models/Loan');
+
+const updateStatus = async (req, res) => {
+    const { id } = req.params;
+    const { status } = req.body;
+
+    try {
+        const headset = await Headset.findById(id);
+        if (!headset) {
+            return res.status(404).json({ message: 'Headset not found' });
+        }
+
+        // Check for active loans to pass to the state manager
+        const activeLoan = await Loan.findOne({
+            headset: headset._id,
+            status: { $in: ['Pending', 'Approved', 'Collected'] }
+        });
+
+        // Initialize state context
+        const context = new HeadsetContext(headset, activeLoan);
+
+        // This will throw an error if the transition is invalid (e.g. loan exists)
+        context.requestStatusChange(status);
+
+        // Save the updated status
+        await headset.save();
+
+        res.json(headset);
+    } catch (error) {
+        res.status(400).json({ message: error.message });
+    }
+};
+
+module.exports = { addHeadset, getHeadsets, getAvailable, updateStatus };
