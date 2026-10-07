@@ -32,15 +32,15 @@ function App() {
   return (
     <Router>
       <Routes>
-        <Route path="/"         element={<Landing />} />
-        <Route path="/login"    element={<Login />} />
+        <Route path="/" element={<Landing />} />
+        <Route path="/login" element={<Login />} />
         <Route path="/register" element={<Register />} />
-        <Route path="/home"     element={student(<Home />)} />
-        <Route path="/find"     element={student(<Find />)} />
-        <Route path="/request"  element={student(<Request />)} />
-        <Route path="/sent"     element={student(<RequestSent />)} />
-        <Route path="/loans"    element={student(<MyLoans />)} />
-        <Route path="/lab"      element={tech(<LabOverview />)} />
+        <Route path="/home" element={student(<Home />)} />
+        <Route path="/find" element={student(<Find />)} />
+        <Route path="/request" element={student(<Request />)} />
+        <Route path="/sent" element={student(<RequestSent />)} />
+        <Route path="/loans" element={student(<MyLoans />)} />
+        <Route path="/lab" element={tech(<LabOverview />)} />
         <Route path="/requests" element={tech(<Requests />)} />
         <Route path="/headsets" element={tech(<Headsets />)} />
       </Routes>
