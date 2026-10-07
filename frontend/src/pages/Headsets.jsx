@@ -47,6 +47,17 @@ const Headsets = () => {
     }
   };
 
+  const updateStatus = async (id, newStatus) => {
+    setError(''); setNotice('');
+    try {
+      await axiosInstance.put(`/api/headsets/${id}/status`, { status: newStatus });
+      setNotice(`Headset status updated to ${newStatus}.`);
+      load();
+    } catch (err) {
+      setError(err.response?.data?.message || 'Could not update status');
+    }
+  };
+
   return (
     <Shell>
       <TopBar title="Headsets" role={user?.role} />
@@ -60,7 +71,9 @@ const Headsets = () => {
 
         <p className={`${MUTED} self-start`}>Tap a headset to see its model, asset tag and status.</p>
 
-        <button type="button" onClick={() => setAdding(!adding)} className={BTN}>Add a headset</button>
+        {user?.role === 'technician' && (
+          <button type="button" onClick={() => setAdding(!adding)} className={BTN}>Add a headset</button>
+        )}
 
         {adding && (
           <form onSubmit={add} className={`${CARD} flex flex-col gap-3`}>
@@ -74,12 +87,36 @@ const Headsets = () => {
         )}
 
         {filtered.map((h) => (
-          <div key={h._id} className={`${CARD} flex items-center gap-2.5`}>
-            <div className="flex-1 flex flex-col justify-center gap-2">
-              <span className={TITLE}>{h.model}</span>
-              <span className={MUTED}>{h.assetTag}</span>
+          <div key={h._id} className={`${CARD} flex flex-col gap-3`}>
+            <div className="flex items-center gap-2.5">
+              <div className="flex-1 flex flex-col justify-center gap-2">
+                <span className={TITLE}>{h.model}</span>
+                <div className="flex items-center gap-2">
+                  <span className={MUTED}>{h.assetTag}</span>
+                  {h.hasActiveLoan && (
+                    <span className="text-[10px] font-bold bg-amber-100 text-amber-800 px-2 py-0.5 rounded-md uppercase tracking-wider">
+                      On Loan
+                    </span>
+                  )}
+                </div>
+              </div>
+              <StatusChip status={h.status} />
             </div>
-            <StatusChip status={h.status} />
+            
+            {user?.role === 'technician' && (
+              <div className="flex items-center justify-between pt-2 border-t border-gray-100 mt-1">
+                <span className="text-sm font-medium text-gray-500">Update Status:</span>
+                <select 
+                  className="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block p-1.5"
+                  value={h.status}
+                  onChange={(e) => updateStatus(h._id, e.target.value)}
+                >
+                  <option value="Available">Available</option>
+                  <option value="Maintenance">Maintenance</option>
+                  <option value="Retired">Retired</option>
+                </select>
+              </div>
+            )}
           </div>
         ))}
 

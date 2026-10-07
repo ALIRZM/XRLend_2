@@ -1,14 +1,13 @@
-// R14: the role is checked on the server, not just hidden in the interface
-const requireRole = (role) => {
+const requireRoles = (...roles) => {
     return (req, res, next) => {
         if (!req.user) {
             return res.status(401).json({ message: 'Not authorised, no user on the request' });
         }
-        if (req.user.role !== role) {
-            return res.status(403).json({ message: `This route is for a ${role} only` });
+        if (!roles.includes(req.user.role)) {
+            return res.status(403).json({ message: `This route requires one of the following roles: ${roles.join(', ')}` });
         }
         next();
     };
 };
 
-module.exports = { requireRole };
+module.exports = { requireRoles };

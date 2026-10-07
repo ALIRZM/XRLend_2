@@ -7,13 +7,13 @@ const {
     rejectLoan,
 } = require('../controllers/loanController');
 const { protect } = require('../middleware/authMiddleware');
-const { requireRole } = require('../middleware/roleMiddleware');
+const { requireRoles } = require('../middleware/roleMiddleware');
 const router = express.Router();
 
-router.post('/', protect, requireRole('student'), requestLoan);
-router.get('/mine', protect, requireRole('student'), getMyLoans);
-router.get('/pending', protect, requireRole('technician'), getPendingLoans);
-router.put('/:id/approve', protect, requireRole('technician'), approveLoan);
-router.put('/:id/reject', protect, requireRole('technician'), rejectLoan);
+router.post('/', protect, requireRoles('student'), requestLoan);
+router.get('/mine', protect, requireRoles('student'), getMyLoans);
+router.get('/pending', protect, requireRoles('technician'), getPendingLoans);
+router.put('/:id/approve', protect, requireRoles('technician'), approveLoan);
+router.put('/:id/reject', protect, requireRoles('technician'), rejectLoan);
 
 module.exports = router;

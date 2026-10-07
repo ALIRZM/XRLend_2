@@ -22,8 +22,18 @@ const addHeadset = async (req, res) => {
 // R10: anyone logged in can browse the list
 const getHeadsets = async (req, res) => {
     try {
-        const headsets = await Headset.find({ status: { $ne: 'Retired' } }).sort({ assetTag: 1 });
-        res.json(headsets);
+        const headsets = await Headset.find({ status: { $ne: 'Retired' } }).sort({ assetTag: 1 }).lean();
+        
+        // Find headsets that currently have an active loan
+        const activeLoans = await Loan.find({ status: { $in: ['Pending', 'Approved', 'Collected'] } }).lean();
+        const activeHeadsetIds = new Set(activeLoans.map(l => String(l.headset)));
+
+        const headsetsWithLoanStatus = headsets.map(h => ({
+            ...h,
+            hasActiveLoan: activeHeadsetIds.has(String(h._id))
+        }));
+
+        res.json(headsetsWithLoanStatus);
     } catch (error) {
         res.status(500).json({ message: error.message });
     }
@@ -56,4 +66,38 @@ const getAvailable = async (req, res) => {
     }
 };
 
-module.exports = { addHeadset, getHeadsets, getAvailable };
+const { HeadsetContext } = require('../utils/HeadsetState');
+const Loan = require('../models/Loan');
+
+const updateStatus = async (req, res) => {
+    const { id } = req.params;
+    const { status } = req.body;
+
+    try {
+        const headset = await Headset.findById(id);
+        if (!headset) {
+            return res.status(404).json({ message: 'Headset not found' });
+        }
+
+        // Check for active loans to pass to the state manager
+        const activeLoan = await Loan.findOne({
+            headset: headset._id,
+            status: { $in: ['Pending', 'Approved', 'Collected'] }
+        });
+
+        // Initialize state context
+        const context = new HeadsetContext(headset, activeLoan);
+
+        // This will throw an error if the transition is invalid (e.g. loan exists)
+        context.requestStatusChange(status);
+
+        // Save the updated status
+        await headset.save();
+
+        res.json(headset);
+    } catch (error) {
+        res.status(400).json({ message: error.message });
+    }
+};
+
+module.exports = { addHeadset, getHeadsets, getAvailable, updateStatus };
