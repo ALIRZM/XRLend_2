@@ -68,6 +68,18 @@ XRLend is a web-based application designed to manage the borrowing and maintenan
    * Frontend will be available at `http://localhost:3000`
    * Backend API will run on `http://localhost:5001`
 
+## 🔑 Test Accounts (Dummy Data)
+
+If the database is empty, you can seed dummy data by running `node seed.js` inside the `/backend` directory.
+
+All dummy accounts share the same password: **`password123`**
+
+* **Technician/Admin Roles:**
+  * `ha.tech@qut.edu.au`
+  * `duy.admin@qut.edu.au`
+* **Student Roles:**
+  * `student1@qut.edu.au` to `student10@qut.edu.au`
+
 ## 🌿 Git Branching Strategy
 
 To ensure a smooth collaboration process and meet the assessment's "Team Collaboration" criteria:
