@@ -100,4 +100,23 @@ const updateStatus = async (req, res) => {
     }
 };
 
-module.exports = { addHeadset, getHeadsets, getAvailable, updateStatus };
+const updateNotes = async (req, res) => {
+    const { id } = req.params;
+    const { notes } = req.body;
+
+    try {
+        const headset = await Headset.findById(id);
+        if (!headset) {
+            return res.status(404).json({ message: 'Headset not found' });
+        }
+
+        headset.notes = notes;
+        await headset.save();
+
+        res.json(headset);
+    } catch (error) {
+        res.status(500).json({ message: error.message });
+    }
+};
+
+module.exports = { addHeadset, getHeadsets, getAvailable, updateStatus, updateNotes };
