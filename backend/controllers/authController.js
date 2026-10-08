@@ -3,6 +3,8 @@ const User = require('../models/User');
 const jwt =require('jsonwebtoken');
 const bcrypt= require('bcrypt');
 
+const { passwordChangeValidator }= require('../utils/validation');
+
 const generateToken= (id) => {
     return jwt.sign({ id }, process.env.JWT_SECRET, { expiresIn: '30d' });
 };
@@ -68,5 +70,32 @@ const updateUserProfile= async (req, res) => {
         res.status(500).json({ message: error.message });
     }
 };
+// XRH-50
+const changePassword = async (req, res) => {
+    try {
 
-module.exports= { registerUser, loginUser, updateUserProfile, getProfile };
+        const errors = passwordChangeValidator.validate(req.body);
+        if (Object.keys(errors).length > 0) {
+            return res.status(400).json({ message: 'Please fix the fields below', errors });
+        }
+
+        const { currentPassword, newPassword } = req.body;
+
+        const user = await User.findById(req.user.id);
+        if (!user) return res.status(404).json({ message: 'User not found' });
+
+        const matches = await bcrypt.compare(currentPassword, user.password);
+        if (!matches) {
+            return res.status(401).json({ message: 'Your old password is not right' });
+        }
+
+
+        user.password = newPassword;
+        await user.save();
+
+        res.status(200).json({ message: 'Password changed' });
+    } catch (error) {
+        res.status(500).json({ message: error.message });
+    }
+};
+module.exports= { registerUser, loginUser, updateUserProfile, getProfile , changePassword };
