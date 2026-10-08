@@ -10,7 +10,7 @@ const icons = {
 };
 
 const BottomNav = () => {
-  const { user, logout } = useAuth();
+  const { user } = useAuth();
   const navigate = useNavigate();
   const { pathname } = useLocation();
 
@@ -35,7 +35,9 @@ const BottomNav = () => {
             <span className="text-black text-[13px] text-center">{t.label}</span>
           </button>
         ))}
-        <button type="button" onClick={() => { logout(); navigate('/login'); }} className={item(false)}>
+        <button type="button" onClick={() => navigate('/profile')}
+          aria-current={pathname === '/profile' ? 'page' : undefined}
+          className={item(pathname === '/profile')}>
           <svg viewBox="0 0 24 24" className="w-6 h-6" fill="none" stroke="black"
             strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round">{icons.account}</svg>
           <span className="text-black text-[13px] text-center">Account</span>
