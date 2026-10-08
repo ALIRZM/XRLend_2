@@ -11,6 +11,7 @@ import LabOverview from './pages/LabOverview';
 import Requests from './pages/Requests';
 import Headsets from './pages/Headsets';
 import Profile from './pages/Profile';
+import Welcome from './pages/Welcome';
 
 
 const RequireRole= ({ role, children }) => {
@@ -25,11 +26,7 @@ const RequireAuth = ({ children }) => {
   if (!user) return <Navigate to="/login" replace />;
   return children;
 };
-const Landing = () => {
-  const { user } = useAuth();
-  if (!user) return <Navigate to="/login" replace />;
-  return <Navigate to={user.role === 'technician' ? '/lab' : '/home'} replace />;
-};
+
 
 const student = (el) => <RequireRole role="student">{el}</RequireRole>;
 const tech = (el) => <RequireRole role="technician">{el}</RequireRole>;
@@ -38,7 +35,7 @@ function App() {
   return (
     <Router>
       <Routes>
-        <Route path ="/" element={<Landing />} />
+        <Route path="/" element={<Welcome />} />
         <Route path="/login" element={<Login />} />
         <Route path="/register" element={<Register />} />
         <Route path="/home" element={student(<Home />)} />
@@ -50,6 +47,7 @@ function App() {
         <Route path="/requests" element={tech(<Requests />)} />
         <Route path ="/headsets" element={tech(<Headsets />)} />
         <Route path="/profile" element={<RequireAuth><Profile /></RequireAuth>} />
+        <Route path="*" element={<Navigate to="/" replace />} />
       </Routes>
     </Router>
   );
