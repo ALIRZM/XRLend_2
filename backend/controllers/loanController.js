@@ -46,7 +46,7 @@ const requestLoan = async (req, res) => {
 const getMyLoans = async (req, res) => {
     try {
         const loans = await Loan.find({ student: req.user.id })
-            .populate('headset', 'model assetTag')
+            .populate('headset', 'model assetTag notes')
             .sort({ createdAt: -1 });
         res.json(loans);
     } catch (error) {

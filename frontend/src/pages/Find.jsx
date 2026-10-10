@@ -72,6 +72,11 @@ const Find = () => {
             <div className="flex-1 flex flex-col justify-center gap-2">
               <span className={TITLE}>{h.model}</span>
               <span className={MUTED}>{h.assetTag}</span>
+              {h.notes && (
+                <p className="text-xs text-gray-700 bg-gray-50 p-2 rounded-md italic mt-1 border border-gray-100">
+                  {h.notes}
+                </p>
+              )}
             </div>
             <button type="button"
               onClick={() => navigate('/request', { state: { headset: h, dates } })}
