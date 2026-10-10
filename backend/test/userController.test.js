@@ -1,7 +1,7 @@
 const chai = require("chai");
 const sinon = require("sinon");
 const User = require("../models/User");
-const { getUsers } = require("../controllers/userController");
+const { getUsers, createUser } = require("../controllers/userController");
 const { expect } = chai;
 
 describe("GetUsers Function Test", () => {
@@ -102,6 +102,96 @@ describe("GetUsers Function Test", () => {
     chain.lean.rejects(new Error("DB Error"));
 
     await getUsers(req, res);
+
+    expect(res.status.calledWith(500)).to.be.true;
+    expect(res.json.calledWithMatch({ message: "DB Error" })).to.be.true;
+  });
+});
+
+describe("CreateUser Function Test", () => {
+  let req, res;
+
+  beforeEach(() => {
+    req = {
+      body: {
+        name: "New Student",
+        email: "new.student@qut.edu.au",
+        password: "password123",
+        role: "student",
+      },
+    };
+    res = {
+      status: sinon.stub().returnsThis(),
+      json: sinon.spy(),
+    };
+  });
+
+  afterEach(() => {
+    sinon.restore();
+  });
+
+  it("should create a student and return the details without a password or token", async () => {
+    sinon.stub(User, "findOne").resolves(null);
+    const createStub = sinon.stub(User, "create").resolves({
+      id: "u1",
+      name: "New Student",
+      email: "new.student@qut.edu.au",
+      role: "student",
+      password: "hashed",
+    });
+
+    await createUser(req, res);
+
+    expect(
+      createStub.calledOnceWith({
+        name: "New Student",
+        email: "new.student@qut.edu.au",
+        password: "password123",
+        role: "student",
+      }),
+    ).to.be.true;
+    expect(res.status.calledWith(201)).to.be.true;
+    expect(
+      res.json.calledWith({
+        id: "u1",
+        name: "New Student",
+        email: "new.student@qut.edu.au",
+        role: "student",
+      }),
+    ).to.be.true;
+  });
+
+  it("should return 400 and create nothing when the role is admin", async () => {
+    req.body.role = "admin";
+    const findStub = sinon.stub(User, "findOne");
+    const createStub = sinon.stub(User, "create");
+
+    await createUser(req, res);
+
+    expect(res.status.calledWith(400)).to.be.true;
+    expect(
+      res.json.calledWith({ message: "Role must be student or technician" }),
+    ).to.be.true;
+    expect(findStub.called).to.be.false;
+    expect(createStub.called).to.be.false;
+  });
+
+  it("should return 400 when the email is already used", async () => {
+    sinon.stub(User, "findOne").resolves({ _id: "u9" });
+    const createStub = sinon.stub(User, "create");
+
+    await createUser(req, res);
+
+    expect(res.status.calledWith(400)).to.be.true;
+    expect(res.json.calledWith({ message: "User already exists" })).to.be.true;
+    expect(createStub.called).to.be.false;
+  });
+
+  it("should return 500 if an error occurs (e.g. DB Error)", async () => {
+    sinon.stub(User, "findOne").resolves(null);
+    sinon.stub(User, "create").rejects(new Error("DB Error"));
+
+    await createUser(req, res);
 
     expect(res.status.calledWith(500)).to.be.true;
     expect(res.json.calledWithMatch({ message: "DB Error" })).to.be.true;
