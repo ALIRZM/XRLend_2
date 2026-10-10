@@ -11,7 +11,7 @@ const getUsers = async (req, res) => {
 
     const users = await User.find({ role: role || { $ne: "admin" } }) // if there is role, query role, otherwise get all except admin
       .select("name email role")
-      .sort({ name: 1, email: 1 })
+      .sort({ role: -1, name: 1 })
       .lean();
 
     res.json(users);
