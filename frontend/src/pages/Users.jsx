@@ -16,9 +16,11 @@ const Users = () => {
   const { user } = useAuth();
   const [users, setUsers] = useState([]);
   const [role, setRole] = useState("");
+  const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
 
   useEffect(() => {
+    setLoading(true);
     setError("");
     axiosInstance
       .get("/api/users", { params: role ? { role } : {} })
@@ -26,7 +28,8 @@ const Users = () => {
       .catch((err) => {
         setUsers([]);
         setError(err.response?.data?.message || "Could not load the users");
-      });
+      })
+      .finally(() => setLoading(false));
   }, [role]);
 
   return (
@@ -38,7 +41,7 @@ const Users = () => {
             {error}
           </div>
         )}
-
+        {/* Role tabs */}
         <div className="flex w-full bg-white rounded-2xl">
           {FILTERS.map((f) => (
             <button
@@ -56,7 +59,13 @@ const Users = () => {
             </button>
           ))}
         </div>
-
+        {/* empty message */}
+        {!loading && !error && users.length === 0 && (
+          <p className={`${MUTED} self-center`}>
+            {role ? "No users match this filter" : "No users found"}
+          </p>
+        )}
+        {/* user list view */}
         {users.map((u) => (
           <div key={u._id} className={`${CARD} flex items-center gap-2.5`}>
             <div className="flex-1 min-w-0 flex flex-col justify-center gap-2">
