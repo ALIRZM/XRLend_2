@@ -32,6 +32,11 @@ const createUser = async (req, res) => {
         .json({ message: "Role must be student or technician" });
     }
 
+    // check duplicate email
+    const userExists = await User.findOne({ email });
+    if (userExists)
+      return res.status(400).json({ message: "User already exists" });
+
     const user = await User.create({ name, email, password, role });
     res.status(201).json({
       id: user.id,
