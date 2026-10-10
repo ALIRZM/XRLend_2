@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useMemo, useState, useCallback } from 'react';
 import { useAuth } from '../context/AuthContext';
 import axiosInstance from '../axiosConfig';
 import Shell from '../components/Shell';
@@ -23,11 +23,13 @@ const Headsets = () => {
   
   const [filterMaintenance, setFilterMaintenance] = useState(false);
 
-  const load = () => axiosInstance.get(`/api/headsets${filterMaintenance ? '?status=Maintenance' : ''}`)
-    .then(({ data }) => setHeadsets(data))
-    .catch((err) => setError(err.response?.data?.message || 'Could not load the inventory'));
+  const load = useCallback(() => {
+    axiosInstance.get(`/api/headsets${filterMaintenance ? '?status=Maintenance' : ''}`)
+      .then(({ data }) => setHeadsets(data))
+      .catch((err) => setError(err.response?.data?.message || 'Could not load the inventory'));
+  }, [filterMaintenance]);
 
-  useEffect(() => { load(); }, [filterMaintenance]);
+  useEffect(() => { load(); }, [load]);
 
   const filtered = useMemo(() => {
     const q = submitted.trim().toLowerCase();
