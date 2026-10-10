@@ -6,19 +6,28 @@ import TopBar from "../components/TopBar";
 import BottomNav from "../components/BottomNav";
 import { CARD, MUTED, TITLE, ERRBOX, PAGE } from "../components/ui";
 
+const FILTERS = [
+  { value: "", label: "All" },
+  { value: "student", label: "Students" },
+  { value: "technician", label: "Technicians" },
+];
+
 const Users = () => {
   const { user } = useAuth();
   const [users, setUsers] = useState([]);
+  const [role, setRole] = useState("");
   const [error, setError] = useState("");
 
   useEffect(() => {
+    setError("");
     axiosInstance
-      .get("/api/users")
+      .get("/api/users", { params: role ? { role } : {} })
       .then(({ data }) => setUsers(data))
-      .catch((err) =>
-        setError(err.response?.data?.message || "Could not load the users"),
-      );
-  }, []);
+      .catch((err) => {
+        setUsers([]);
+        setError(err.response?.data?.message || "Could not load the users");
+      });
+  }, [role]);
 
   return (
     <Shell>
@@ -29,6 +38,24 @@ const Users = () => {
             {error}
           </div>
         )}
+
+        <div className="flex w-full bg-white rounded-2xl">
+          {FILTERS.map((f) => (
+            <button
+              key={f.value}
+              type="button"
+              onClick={() => setRole(f.value)}
+              aria-pressed={role === f.value}
+              className={`flex-1 h-[46px] rounded-2xl px-2 text-base text-center ${
+                role === f.value
+                  ? "bg-[#343434] text-white"
+                  : "bg-white text-[#667085]"
+              }`}
+            >
+              {f.label}
+            </button>
+          ))}
+        </div>
 
         {users.map((u) => (
           <div key={u._id} className={`${CARD} flex items-center gap-2.5`}>
