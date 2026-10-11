@@ -36,7 +36,14 @@ const AdminHeadsets = () => {
       return;
     }
 
-    // XRH-73 will connect this action to the backend delete API.
+    setError("");
+
+    axiosInstance
+      .delete(`/api/headsets/admin/${headset._id}`)
+      .then(() => { loadHeadsets(); })
+      .catch((err) => {
+        setError(err.response?.data?.message || "Could not delete the headset");
+      });
   };
 
   useEffect(() => { loadHeadsets(); }, []);
