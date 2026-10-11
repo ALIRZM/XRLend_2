@@ -124,6 +124,46 @@ const updateNotes = async (req, res) => {
     }
 };
 
+const updateHeadset = async (req, res) => {
+    const { id } = req.params;
+    const { model, status, notes } = req.body;
+
+    try {
+        if (!model || !status) {
+            return res.status(400).json({ message: 'Model and status are required' });
+        }
+
+        const allowedStatuses = ['Available', 'Maintenance', 'Retired'];
+
+        if (!allowedStatuses.includes(status)) {
+            return res.status(400).json({ message: 'Invalid headset status' });
+        }
+
+        const headset = await Headset.findById(id);
+
+        if (!headset) {
+            return res.status(404).json({ message: 'Headset not found' });
+        }
+
+        const activeLoan = await Loan.findOne({
+            headset: headset._id,
+            status: { $in: ['Pending', 'Approved', 'Collected'] }
+        });
+
+        const context = new HeadsetContext(headset, activeLoan);
+        context.requestStatusChange(status);
+
+        headset.model = model;
+        headset.notes = notes;
+
+        await headset.save();
+
+        res.json(headset);
+    } catch (error) {
+        res.status(400).json({ message: error.message });
+    }
+};
+
 const deleteHeadset = async (req, res) => {
     const { id } = req.params;
 
@@ -142,4 +182,4 @@ const deleteHeadset = async (req, res) => {
     }
 };
 
-module.exports = { addHeadset, getHeadsets, getAvailable, updateStatus, updateNotes, deleteHeadset };
+module.exports = { addHeadset, getHeadsets, getAvailable, updateStatus, updateNotes, updateHeadset, deleteHeadset };
