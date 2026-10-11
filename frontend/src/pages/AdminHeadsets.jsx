@@ -44,6 +44,32 @@ const AdminHeadsets = () => {
     setEditStatus("");
     setEditNotes("");
   };
+
+  const handleSaveEdit = () => {
+    setError("");
+
+    if (!editModel.trim()) {
+      setError("Model is required");
+      return;
+    }
+
+    axiosInstance
+      .put(`/api/headsets/admin/${editingId}`, {
+        model: editModel.trim(),
+        status: editStatus,
+        notes: editNotes
+      })
+      .then(() => {
+        setEditingId(null);
+        setEditModel("");
+        setEditStatus("");
+        setEditNotes("");
+        loadHeadsets();
+      })
+      .catch((err) => {
+        setError(err.response?.data?.message || "Could not update the headset");
+      });
+  };
   
   const handleDeleteClick = (headset) => {
     const confirmed = window.confirm(
@@ -117,7 +143,7 @@ const AdminHeadsets = () => {
                 </div>
 
                 <div className="flex gap-2">
-                  <button type="button" className="rounded-lg border px-3 py-2 text-sm">Save</button>
+                  <button type="button" onClick={handleSaveEdit} className="rounded-lg border px-3 py-2 text-sm">Save</button>
                   <button type="button" onClick={handleCancelEdit} className="rounded-lg border px-3 py-2 text-sm">Cancel</button>
                 </div>
               </>
