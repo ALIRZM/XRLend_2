@@ -1,5 +1,7 @@
 const User = require("../models/User");
+const UserAccountFacade = require("../utils/UserAccountFacade");
 
+const accounts = new UserAccountFacade();
 const LISTED_ROLES = ["student", "technician"];
 
 const getUsers = async (req, res) => {
@@ -48,4 +50,13 @@ const createUser = async (req, res) => {
     res.status(500).json({ message: error.message });
   }
 };
-module.exports = { getUsers, createUser };
+const deleteUser = async (req, res) => {
+  try {
+    await accounts.deleteAccount(req.params.id);
+    res.json({ message: "User deleted" });
+  } catch (error) {
+    // The facade attaches a status to the errors it expects (404, 403, 409)
+    res.status(error.status || 500).json({ message: error.message });
+  }
+};
+module.exports = { getUsers, createUser, deleteUser };

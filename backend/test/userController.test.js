@@ -1,9 +1,17 @@
 const chai = require("chai");
 const sinon = require("sinon");
 const User = require("../models/User");
-const { getUsers, createUser } = require("../controllers/userController");
+const Loan = require("../models/Loan");
+const {
+  getUsers,
+  createUser,
+  deleteUser,
+} = require("../controllers/userController");
 const { expect } = chai;
+const UserAccountFacade = require("../utils/UserAccountFacade");
+const mongoose = require("mongoose");
 
+// GET USER
 describe("GetUsers Function Test", () => {
   let req, res, chain;
 
@@ -108,6 +116,7 @@ describe("GetUsers Function Test", () => {
   });
 });
 
+// CREATE USER
 describe("CreateUser Function Test", () => {
   let req, res;
 
@@ -195,5 +204,137 @@ describe("CreateUser Function Test", () => {
 
     expect(res.status.calledWith(500)).to.be.true;
     expect(res.json.calledWithMatch({ message: "DB Error" })).to.be.true;
+  });
+});
+
+// DELETE USER
+describe("DeleteUser Function Test", () => {
+  let req, res;
+
+  beforeEach(() => {
+    req = { params: { id: new mongoose.Types.ObjectId().toString() } };
+    res = {
+      status: sinon.stub().returnsThis(),
+      json: sinon.spy(),
+    };
+  });
+
+  afterEach(() => {
+    sinon.restore();
+  });
+
+  it("should delete the account and return a message", async () => {
+    const deleteStub = sinon
+      .stub(UserAccountFacade.prototype, "deleteAccount")
+      .resolves();
+
+    await deleteUser(req, res);
+
+    expect(deleteStub.calledOnceWith(req.params.id)).to.be.true;
+    expect(res.json.calledWith({ message: "User deleted" })).to.be.true;
+    expect(res.status.called).to.be.false;
+  });
+
+  it("should answer with the status of the error the facade throws", async () => {
+    const notFound = Object.assign(new Error("That user does not exist"), {
+      status: 404,
+    });
+    sinon.stub(UserAccountFacade.prototype, "deleteAccount").rejects(notFound);
+
+    await deleteUser(req, res);
+
+    expect(res.status.calledWith(404)).to.be.true;
+    expect(res.json.calledWith({ message: "That user does not exist" })).to.be
+      .true;
+  });
+
+  it("should return 500 if an unexpected error occurs", async () => {
+    sinon
+      .stub(UserAccountFacade.prototype, "deleteAccount")
+      .rejects(new Error("DB Error"));
+
+    await deleteUser(req, res);
+
+    expect(res.status.calledWith(500)).to.be.true;
+    expect(res.json.calledWithMatch({ message: "DB Error" })).to.be.true;
+  });
+});
+
+describe("UserAccountFacade deleteAccount Test", () => {
+  const facade = new UserAccountFacade();
+  const id = new mongoose.Types.ObjectId().toString();
+  let user, existsStub, deleteLoansStub;
+
+  // Runs deleteAccount and hands back the error it threw, or undefined if it worked
+  const attempt = async (userId = id) => {
+    try {
+      await facade.deleteAccount(userId);
+    } catch (error) {
+      return error;
+    }
+  };
+
+  beforeEach(() => {
+    user = {
+      _id: new mongoose.Types.ObjectId(),
+      role: "student",
+      deleteOne: sinon.stub().resolves(),
+    };
+    sinon.stub(User, "findById").resolves(user);
+    existsStub = sinon.stub(Loan, "exists").resolves(null);
+    deleteLoansStub = sinon.stub(Loan, "deleteMany").resolves();
+  });
+
+  afterEach(() => {
+    sinon.restore();
+  });
+
+  it("should delete a student and their loans", async () => {
+    const error = await attempt();
+
+    expect(error).to.be.undefined;
+    expect(deleteLoansStub.calledOnceWith({ student: user._id })).to.be.true;
+    expect(user.deleteOne.calledOnce).to.be.true;
+  });
+
+  it("should delete a technician", async () => {
+    user.role = "technician";
+
+    const error = await attempt();
+
+    expect(error).to.be.undefined;
+    expect(user.deleteOne.calledOnce).to.be.true;
+  });
+
+  it("should return 404 when the user does not exist", async () => {
+    User.findById.resolves(null);
+
+    const error = await attempt();
+
+    expect(error.status).to.equal(404);
+    expect(user.deleteOne.called).to.be.false;
+  });
+
+  it("should refuse to delete an admin with 403", async () => {
+    user.role = "admin";
+
+    const error = await attempt();
+
+    expect(error.status).to.equal(403);
+    expect(deleteLoansStub.called).to.be.false;
+    expect(user.deleteOne.called).to.be.false;
+  });
+
+  it("should refuse with 409 while the student still has a headset out", async () => {
+    existsStub.resolves({ _id: new mongoose.Types.ObjectId() });
+
+    const error = await attempt();
+
+    expect(error.status).to.equal(409);
+    expect(
+      existsStub.calledOnceWith({ student: user._id, status: "Collected" }),
+    ).to.be.true;
+    expect(deleteLoansStub.called).to.be.false;
+    expect(user.deleteOne.called).to.be.false;
   });
 });
