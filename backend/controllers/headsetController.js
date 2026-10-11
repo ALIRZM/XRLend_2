@@ -124,4 +124,22 @@ const updateNotes = async (req, res) => {
     }
 };
 
-module.exports = { addHeadset, getHeadsets, getAvailable, updateStatus, updateNotes };
+const deleteHeadset = async (req, res) => {
+    const { id } = req.params;
+
+    try {
+        const headset = await Headset.findById(id);
+
+        if (!headset) {
+            return res.status(404).json({ message: 'Headset not found' });
+        }
+
+        await headset.deleteOne();
+
+        res.json({ message: 'Headset deleted successfully' });
+    } catch (error) {
+        res.status(500).json({ message: error.message });
+    }
+};
+
+module.exports = { addHeadset, getHeadsets, getAvailable, updateStatus, updateNotes, deleteHeadset };
