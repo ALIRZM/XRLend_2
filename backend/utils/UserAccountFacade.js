@@ -18,14 +18,27 @@ class UserAccountFacade {
       : null;
     if (!user) throw fail(404, "That user does not exist");
 
-    this.#assertCanDelete(user);
+    await this.#assertCanDelete(user);
+    await this.#deleteLoans(user);
     await user.deleteOne();
   }
 
-  // Admin accounts are protected
-  #assertCanDelete(user) {
+  // Admin accounts are protected, and a headset that is still out must come back first
+  async #assertCanDelete(user) {
     if (user.role === "admin")
       throw fail(403, "Admin accounts cannot be deleted");
+
+    const headsetOut = await Loan.exists({
+      student: user._id,
+      status: "Collected",
+    });
+    if (headsetOut)
+      throw fail(409, "This student has not returned a headset yet");
+  }
+
+  // delete any loans belonging to the deleted student account
+  async #deleteLoans(user) {
+    await Loan.deleteMany({ student: user._id });
   }
 }
 
