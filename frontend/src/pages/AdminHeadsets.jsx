@@ -27,6 +27,18 @@ const AdminHeadsets = () => {
       .finally(() => { setLoading(false); });
   };
   
+  const handleDeleteClick = (headset) => {
+    const confirmed = window.confirm(
+      `Are you sure you want to permanently delete ${headset.assetTag}?`
+    );
+
+    if (!confirmed) {
+      return;
+    }
+
+    // XRH-73 will connect this action to the backend delete API.
+  };
+
   useEffect(() => { loadHeadsets(); }, []);
   
   return (
@@ -54,7 +66,13 @@ const AdminHeadsets = () => {
               <span className={MUTED}>Asset Tag: {headset.assetTag}</span>
             </div>
 
-            <StatusChip status={headset.status} />
+            <div className="flex items-center gap-2">
+              <StatusChip status={headset.status} />
+              
+              <button type="button" onClick={() => handleDeleteClick(headset)} className="rounded-lg border px-3 py-2 text-sm">
+                Delete
+              </button>
+            </div>              
           </div>
         ))}
       </div>
