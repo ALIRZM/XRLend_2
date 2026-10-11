@@ -6,6 +6,8 @@ const router = express.Router();
 
 router.get('/available', protect, getAvailable);
 
+router.get('/admin', protect, requireRoles('admin'), getHeadsets);
+
 router.route('/')
     .get(protect, getHeadsets)
     .post(protect, requireRoles('technician', 'admin'), addHeadset);
