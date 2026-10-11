@@ -7,5 +7,6 @@ const router = express.Router();
 router.use(protect, requireRoles("admin"));
 router.get("/", getUsers);
 router.post("/", createUser);
+router.delete("/:id", deleteUser);
 
 module.exports = router;
