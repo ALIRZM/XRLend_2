@@ -13,6 +13,7 @@ import {
   MUTED,
   OKBOX,
   PAGE,
+  SUB,
   TITLE,
 } from "../components/ui";
 
@@ -44,9 +45,6 @@ const UserPlusIcon = () => (
 const ADD_BTN =
   "flex items-center gap-1.5 shrink-0 bg-[#04000b] rounded-xl px-3.5 py-2 text-white text-base font-medium leading-6";
 
-// XRH-4, XRH-6, XRH-7: the admin landing page. An admin sees every student and
-// technician, or only one role. The server does the filtering.
-// XRH-11, XRH-13, XRH-14: an admin can add a user from a sheet on this page.
 const Users = () => {
   const [users, setUsers] = useState([]);
   const [role, setRole] = useState("");
@@ -57,6 +55,7 @@ const Users = () => {
   const [creating, setCreating] = useState(false);
   const [form, setForm] = useState(EMPTY_FORM);
   const [createError, setCreateError] = useState("");
+  const [deleting, setDeleting] = useState(null);
 
   useEffect(() => {
     setLoading(true);
@@ -95,6 +94,21 @@ const Users = () => {
         err.response?.data?.message || "Could not create the user",
       );
     }
+  };
+
+  const remove = async () => {
+    setError("");
+    setNotice("");
+    try {
+      await axiosInstance.delete(`/api/users/${deleting._id}`);
+      setNotice(`${deleting.name} was deleted.`);
+      // The list is refreshed without asking the server again
+      setUsers((current) => current.filter((u) => u._id !== deleting._id));
+    } catch (err) {
+      // 409 means the student still has a headset out
+      setError(err.response?.data?.message || "Could not delete that user");
+    }
+    setDeleting(null);
   };
 
   return (
@@ -138,29 +152,59 @@ const Users = () => {
           ))}
         </div>
 
-        {/* No record message */}
+        {/* EMPTY MESSAGE */}
         {!loading && !error && users.length === 0 && (
-          <p className={`${MUTED} self-start`}>
-            {role ? "No users match this filter." : "No users found."}
+          <p className={`${MUTED} self-center`}>
+            {role ? "No users match this filter" : "No users found"}
           </p>
         )}
 
         {users.map((u) => (
-          <div key={u._id} className={`${CARD} flex items-center gap-2.5`}>
-            <div className="flex-1 min-w-0 flex flex-col justify-center gap-2">
-              <span className={TITLE}>{u.name}</span>
-              <span className={`${MUTED} break-all`}>{u.email}</span>
-            </div>
-            <div className="bg-[#e7f2eb] rounded-lg px-3 py-[3px]">
-              <span className="text-[#1c6440] text-base text-center capitalize">
-                {u.role}
-              </span>
+          <div key={u._id} className={`${CARD} flex flex-col gap-2.5`}>
+            <div className="flex items-center gap-2.5">
+              <div className="flex-1 min-w-0 flex flex-col justify-center gap-2">
+                <div className="flex items-center gap-2">
+                  <span className={TITLE}>{u.name}</span>
+                  <div className="bg-[#e7f2eb] rounded-md px-2 py-[1px]">
+                    <span className="text-[#1c6440] text-xs text-center capitalize">
+                      {u.role}
+                    </span>
+                  </div>
+                </div>
+                <span className={`${MUTED} break-all`}>{u.email}</span>
+              </div>
+              <button
+                type="button"
+                aria-label="Delete"
+                onClick={() => setDeleting(u)}
+                class="inline-flex items-center justify-center p-2 text-gray-500 hover:text-red-600 bg-white hover:bg-gray-50 border border-gray-300 rounded-lg shadow-sm transition-colors focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500"
+              >
+                <svg
+                  xmlns="http://www.w3.org/2000/svg"
+                  width="18"
+                  height="18"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  stroke-width="2"
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
+                  class="icon icon-tabler icons-tabler-outline icon-tabler-trash"
+                >
+                  <path stroke="none" d="M0 0h24v24H0z" fill="none" />
+                  <path d="M4 7l16 0" />
+                  <path d="M10 11l0 6" />
+                  <path d="M14 11l0 6" />
+                  <path d="M5 7l1 12a2 2 0 0 0 2 2h8a2 2 0 0 0 2 -2l1 -12" />
+                  <path d="M9 7v-3a1 1 0 0 1 1 -1h4a1 1 0 0 1 1 1v3" />
+                </svg>
+              </button>
             </div>
           </div>
         ))}
       </div>
 
-      {/* The create user modal */}
+      {/* CREATE MODAL */}
       {creating && (
         <div className="fixed inset-0 z-20 flex items-end justify-center bg-black/40">
           <form
@@ -225,6 +269,36 @@ const Users = () => {
               Cancel
             </button>
           </form>
+        </div>
+      )}
+
+      {/* DELETE MODAL */}
+      {deleting && (
+        <div className="fixed inset-0 z-20 flex items-end justify-center bg-black/40">
+          <section className="w-[390px] bg-white rounded-t-[15px] px-[15px] py-[11px] flex flex-col gap-[11px]">
+            <div className="flex flex-col gap-1">
+              <h2 className={H2}>Delete this user</h2>
+              <p className={SUB}>
+                {deleting.name}&nbsp;&nbsp;.&nbsp;&nbsp;{deleting.email}
+              </p>
+              <p className={MUTED}>
+                {deleting.role === "student"
+                  ? "The account and any loans it has will be deleted."
+                  : "Are your sure you want to delete this account?"}{" "}
+                This cannot be undone.
+              </p>
+            </div>
+            <button type="button" onClick={remove} className={BTN}>
+              Delete user
+            </button>
+            <button
+              type="button"
+              onClick={() => setDeleting(null)}
+              className={BTN_ALT}
+            >
+              Keep user
+            </button>
+          </section>
         </div>
       )}
       <BottomNav />

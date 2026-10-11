@@ -59,4 +59,4 @@ const deleteUser = async (req, res) => {
     res.status(error.status || 500).json({ message: error.message });
   }
 };
-module.exports = { getUsers, createUser };
+module.exports = { getUsers, createUser, deleteUser };

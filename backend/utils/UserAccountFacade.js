@@ -6,7 +6,7 @@
  */
 const mongoose = require("mongoose");
 const User = require("../models/User");
-
+const Loan = require("../models/Loan");
 // An error that carries the HTTP status the controller should answer with
 const fail = (status, message) => Object.assign(new Error(message), { status });
 
@@ -32,8 +32,7 @@ class UserAccountFacade {
       student: user._id,
       status: "Collected",
     });
-    if (headsetOut)
-      throw fail(409, "This student has not returned a headset yet");
+    if (headsetOut) throw fail(409, "This student is still holding a headset.");
   }
 
   // delete any loans belonging to the deleted student account
