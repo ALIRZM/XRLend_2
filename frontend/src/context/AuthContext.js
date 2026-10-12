@@ -1,9 +1,10 @@
 import React, { createContext, useState, useContext } from 'react';
+import axiosInstance from '../axiosConfig';
 
 const AuthContext = createContext();
 
 export const AuthProvider = ({ children }) => {
-  // Kept in localStorage so a page refresh does not log you out
+
   const [user, setUser] = useState(() => {
     const stored = localStorage.getItem('xrlend-user');
     return stored ? JSON.parse(stored) : null;
@@ -14,8 +15,14 @@ export const AuthProvider = ({ children }) => {
     setUser(userData);
   };
 
-  // R6 and R8: log out clears the token, so protected pages send you back to login
-  const logout = () => {
+ 
+
+  const logout = async () => {
+    try {
+      await axiosInstance.post('/api/auth/logout');
+    } catch {
+
+    }
     localStorage.removeItem('xrlend-user');
     setUser(null);
   };
