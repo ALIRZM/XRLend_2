@@ -4,8 +4,10 @@ const {
     RequiredRule,
     MinLengthRule,
     MatchRule,
+    EmailFormatRule,
     Validator,
     passwordChangeValidator,
+    profileUpdateValidator,
 } = require('../utils/validation');
 
 // XRH-50
@@ -64,6 +66,28 @@ describe('XRH-50 Validation rules (Strategy pattern)', () => {
             newPassword: 'newpassword456',
             confirmPassword: 'newpassword456',
         });
+        expect(errors).to.deep.equal({});
+    });
+    
+    // XRH-49: a new rule and a new list of rules, with no change to the Validator
+    it('EmailFormatRule should fail when the value is not an email (XRH-49)', () => {
+        const rule = new EmailFormatRule('email', 'Not an email');
+        expect(rule).to.be.instanceOf(ValidationRule);
+        expect(rule.check('not-an-email')).to.be.false;
+        expect(rule.check('ali@qut')).to.be.false;
+        expect(rule.check('ali@qut.edu.au')).to.be.true;
+    });
+
+    it('profileUpdateValidator should fail for an empty name and a wrong email (XRH-49)', () => {
+        const errors = profileUpdateValidator.validate({ name: '  ', email: 'not-an-email' });
+        expect(errors).to.deep.equal({
+            name: 'Enter your name',
+            email: 'Enter a valid email address',
+        });
+    });
+
+    it('profileUpdateValidator should pass a correct name and email (XRH-49)', () => {
+        const errors = profileUpdateValidator.validate({ name: 'Ali', email: 'ali@qut.edu.au' });
         expect(errors).to.deep.equal({});
     });
 });

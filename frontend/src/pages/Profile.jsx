@@ -9,24 +9,30 @@ import { CARD, FIELD, FIELD_E, BTN, BTN_ALT, MUTED, TITLE, ERRBOX, OKBOX, PAGE }
 
 const EMPTY_PASSWORDS = { currentPassword: '', newPassword: '', confirmPassword: '' };
 
-
+// The title shown above each field, and the red message under it
 const LABEL = 'text-black text-sm font-medium leading-[21px]';
 const FIELD_ERROR = 'text-[#9c2e26] text-sm leading-[21px]';
 
 const Profile = () => {
-  const { user, logout } = useAuth();
+  const { user, logout, updateUser } = useAuth();
   const navigate = useNavigate();
   const [profile, setProfile] = useState(null);
   const [error, setError] = useState('');
   const [notice, setNotice] = useState('');
   const [loggingOut, setLoggingOut] = useState(false);
 
+  const [details, setDetails] = useState({ name: '', email: '' });
+  const [detailErrors, setDetailErrors] = useState({});
+
   const [passwords, setPasswords] = useState(EMPTY_PASSWORDS);
   const [passwordErrors, setPasswordErrors] = useState({});
 
   useEffect(() => {
     axiosInstance.get('/api/auth/profile')
-      .then(({ data }) => setProfile(data))
+      .then(({ data }) => {
+        setProfile(data);
+        setDetails({ name: data.name, email: data.email });
+      })
       .catch((err) => {
         if (err.response?.status === 401) {
           logout();
@@ -38,13 +44,39 @@ const Profile = () => {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-
+  // XRH-51: wait for the server to end the session, then go to login
   const handleLogout = async () => {
     setLoggingOut(true);
     await logout();
     navigate('/login', { replace: true });
   };
 
+  // XRH-49: save the new name and email, then show what the server says
+  const saveDetails = async (e) => {
+    e.preventDefault();
+    setError(''); setNotice(''); setDetailErrors({});
+    try {
+      const { data } = await axiosInstance.put('/api/auth/profile', details);
+      setProfile(data);
+      setDetails({ name: data.name, email: data.email });
+      updateUser({ name: data.name, email: data.email });
+      setNotice('Your details have been saved.');
+    } catch (err) {
+      const data = err.response?.data;
+      if (data?.errors) {
+        setDetailErrors(data.errors);
+      } else {
+        setError(data?.message || 'Could not save your details. Please try again.');
+      }
+    }
+  };
+
+  const detailFields = [
+    { name: 'name', label: 'Name', type: 'text', autoComplete: 'name' },
+    { name: 'email', label: 'Email', type: 'email', autoComplete: 'email' },
+  ];
+
+  // XRH-50: send the three password fields, then show what the server says
   const changePassword = async (e) => {
     e.preventDefault();
     setError(''); setNotice(''); setPasswordErrors({});
@@ -95,6 +127,23 @@ const Profile = () => {
           ))}
           <p className={MUTED}>Your role is set by the lab and cannot be changed here.</p>
         </div>
+
+        <form onSubmit={saveDetails} noValidate className={`${CARD} flex flex-col gap-4`}>
+          <span className={TITLE}>Edit details</span>
+          {detailFields.map((f) => (
+            <div key={f.name} className="flex flex-col gap-1.5">
+              <label htmlFor={f.name} className={LABEL}>{f.label}</label>
+              <input id={f.name} type={f.type} autoComplete={f.autoComplete}
+                className={detailErrors[f.name] ? FIELD_E : FIELD}
+                value={details[f.name]}
+                onChange={(e) => setDetails({ ...details, [f.name]: e.target.value })} />
+              {detailErrors[f.name] && (
+                <span className={FIELD_ERROR} role="alert">{detailErrors[f.name]}</span>
+              )}
+            </div>
+          ))}
+          <button type="submit" className={BTN}>Save details</button>
+        </form>
 
         <form onSubmit={changePassword} noValidate className={`${CARD} flex flex-col gap-4`}>
           <span className={TITLE}>Change password</span>
