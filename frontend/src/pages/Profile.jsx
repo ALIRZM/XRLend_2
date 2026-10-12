@@ -19,6 +19,7 @@ const Profile = () => {
   const [profile, setProfile] = useState(null);
   const [error, setError] = useState('');
   const [notice, setNotice] = useState('');
+  const [loggingOut, setLoggingOut] = useState(false);
 
   const [passwords, setPasswords] = useState(EMPTY_PASSWORDS);
   const [passwordErrors, setPasswordErrors] = useState({});
@@ -37,11 +38,12 @@ const Profile = () => {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  const handleLogout = () => {
-    logout();
+
+  const handleLogout = async () => {
+    setLoggingOut(true);
+    await logout();
     navigate('/login', { replace: true });
   };
-
 
   const changePassword = async (e) => {
     e.preventDefault();
@@ -112,7 +114,9 @@ const Profile = () => {
         </form>
 
         <div className="flex-1" />
-        <button type="button" onClick={handleLogout} className={BTN_ALT}>Log out</button>
+        <button type="button" onClick={handleLogout} disabled={loggingOut} className={BTN_ALT}>
+          {loggingOut ? 'Logging out...' : 'Log out'}
+        </button>
       </div>
       <BottomNav />
     </Shell>

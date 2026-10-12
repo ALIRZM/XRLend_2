@@ -1,5 +1,6 @@
 
-const User = require('../models/User');
+const User= require('../models/User');
+const RevokedToken= require('../models/RevokedToken');
 const jwt =require('jsonwebtoken');
 const bcrypt= require('bcrypt');
 
@@ -98,4 +99,15 @@ const changePassword = async (req, res) => {
         res.status(500).json({ message: error.message });
     }
 };
-module.exports= { registerUser, loginUser, updateUserProfile, getProfile , changePassword };
+
+
+const logoutUser = async (req, res) => {
+    try {
+
+        await RevokedToken.revoke(req.token, req.tokenExpiresAt);
+        res.status(200).json({ message: 'Logged out' });
+    } catch (error) {
+        res.status(500).json({ message: error.message });
+    }
+};
+module.exports = { registerUser , loginUser, updateUserProfile, getProfile , changePassword , logoutUser };

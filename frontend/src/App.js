@@ -18,6 +18,7 @@ import Headsets from "./pages/Headsets";
 import Profile from "./pages/Profile";
 import Welcome from "./pages/Welcome";
 import Users from "./pages/Users";
+import AdminHeadsets from "./pages/AdminHeadsets";
 
 const RequireRole = ({ role, children }) => {
   const { user } = useAuth();
@@ -64,6 +65,7 @@ function App() {
         <Route path="/requests" element={tech(<Requests />)} />
         <Route path="/headsets" element={tech(<Headsets />)} />
         <Route path="/admin/users" element={admin(<Users />)} />
+        <Route path="/admin/headsets" element={admin(<AdminHeadsets />)} />
         <Route
           path="/profile"
           element={

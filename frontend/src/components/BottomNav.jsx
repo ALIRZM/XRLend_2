@@ -45,7 +45,10 @@ const BottomNav = () => {
   const { pathname } = useLocation();
 
   const tabsByRole = {
-    admin: [{ to: "/admin/users", label: "Users", icon: "users" }],
+    admin: [
+      { to: "/admin/users", label: "Users", icon: "users" },
+      { to: "/admin/headsets", label: "Headsets", icon: "headsets" },
+    ],
     technician: [
       { to: "/requests", label: "Requests", icon: "requests" },
       { to: "/headsets", label: "Headsets", icon: "headsets" },
