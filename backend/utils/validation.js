@@ -44,7 +44,12 @@ class MatchRule extends ValidationRule {
     }
 }
 
-
+// must look like an email address
+class EmailFormatRule extends ValidationRule {
+    check(value) {
+        return typeof value === 'string' && /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(value.trim());
+    }
+}
 class Validator {
     constructor(rules) {
         this.rules = rules;
@@ -72,11 +77,21 @@ const passwordChangeValidator=new Validator([
     new MatchRule('confirmPassword' , 'newPassword' , 'The two new passwords are not the same'),
 ]);
 
-module.exports= {
+
+// XRH-49: the rules for editing profile
+const profileUpdateValidator = new Validator([
+    new RequiredRule('name', 'Enter your name'),
+    new RequiredRule('email', 'Enter your email'),
+    new EmailFormatRule('email', 'Enter a valid email address'),
+]);
+
+module.exports = {
     ValidationRule,
     RequiredRule,
     MinLengthRule,
     MatchRule,
+    EmailFormatRule,
     Validator,
     passwordChangeValidator,
+    profileUpdateValidator,
 };
