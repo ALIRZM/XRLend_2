@@ -1,4 +1,5 @@
 const Headset = require('../models/Headset');
+const HeadsetAdminAdapter = require('../utils/HeadsetAdminAdapter');
 
 
 // R9: a technician adds a headset
@@ -31,12 +32,8 @@ const getHeadsets = async (req, res) => {
         
         // Find headsets that currently have an active loan
         const activeLoans = await Loan.find({ status: { $in: ['Pending', 'Approved', 'Collected'] } }).lean();
-        const activeHeadsetIds = new Set(activeLoans.map(l => String(l.headset)));
-
-        const headsetsWithLoanStatus = headsets.map(h => ({
-            ...h,
-            hasActiveLoan: activeHeadsetIds.has(String(h._id))
-        }));
+        
+        const headsetsWithLoanStatus = HeadsetAdminAdapter.adaptMany(headsets, activeLoans);
 
         res.json(headsetsWithLoanStatus);
     } catch (error) {
