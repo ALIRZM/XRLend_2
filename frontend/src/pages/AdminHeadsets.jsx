@@ -157,6 +157,12 @@ const AdminHeadsets = () => {
                     {headset.notes && (
                       <span className={MUTED}>Notes: {headset.notes}</span>
                     )}
+
+                    {headset.hasActiveLoan && (
+                      <span className="text-[10px] font-bold bg-amber-100 text-amber-800 px-2 py-0.5 rounded-md uppercase tracking-wider self-start">
+                        Active Loan
+                      </span>
+                    )}
                   </div>
 
                   <StatusChip status={headset.status} />
